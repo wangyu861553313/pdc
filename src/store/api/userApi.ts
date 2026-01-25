@@ -25,9 +25,32 @@ export interface UserListResponse {
   errorMessage?: string;
 }
 
+export interface LoginParams {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  data?: {
+    token?: string;
+    userInfo?: UserInfo;
+  };
+  success?: boolean;
+  errorMessage?: string;
+}
+
 // 扩展 API Slice
 export const userApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
+    // 用户登录
+    login: builder.mutation<LoginResponse, LoginParams>({
+      query: (body) => ({
+        url: '/v1/login',
+        method: 'POST',
+        body,
+      }),
+    }),
+
     // 获取用户列表
     getUserList: builder.query<UserListResponse, UserListParams>({
       query: (params) => ({
@@ -86,6 +109,7 @@ export const userApi = apiSlice.injectEndpoints({
 
 // 导出 hooks
 export const {
+  useLoginMutation,
   useGetUserListQuery,
   useGetUserDetailQuery,
   useAddUserMutation,

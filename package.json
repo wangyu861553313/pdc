@@ -9,6 +9,7 @@
     "format": "prettier --cache --write .",
     "postinstall": "max setup",
     "prepare": "husky",
+    "preview": "node scripts/preview.mjs",
     "setup": "max setup",
     "start": "npm run dev",
     "test": "vitest run",

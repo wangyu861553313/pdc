@@ -4,7 +4,10 @@ const isProd = process.env.NODE_ENV === 'production';
 
 export default defineConfig({
   antd: {},
-  access: {},
+  access: {
+    // 未授权时跳转到登录页
+    unauthorizedRedirect: '/login',
+  },
   model: {},
   initialState: {},
   request: {},
@@ -17,24 +20,35 @@ export default defineConfig({
       redirect: '/home',
     },
     {
+      name: '登录',
+      path: '/login',
+      component: './Login',
+      layout: false,
+      // 登录页面不需要权限，但已登录用户访问时重定向到首页
+    },
+    {
       name: '首页',
       path: '/home',
       component: './Home',
+      access: 'isLogin', // 需要登录权限
     },
     {
       name: '权限演示',
       path: '/access',
       component: './Access',
+      access: 'isLogin', // 需要登录权限
     },
     {
       name: ' CRUD 示例',
       path: '/table',
       component: './Table',
+      access: 'isLogin', // 需要登录权限
     },
     {
       name: 'Example',
       path: '/Example',
       component: './Example',
+      access: 'isLogin', // 需要登录权限
     },
   ],
 
@@ -78,38 +92,6 @@ export default defineConfig({
       // Rollup 打包配置
       rollupOptions: {
         output: {
-          // 更精细的手动分包策略
-          manualChunks(id: string) {
-            // node_modules 中的包
-            if (id.includes('node_modules')) {
-              // React 核心库（体积大，单独打包）
-              if (
-                id.includes('/react/') ||
-                id.includes('/react-dom/') ||
-                id.includes('/scheduler/')
-              ) {
-                return 'react-vendor';
-              }
-              // Ant Design 核心（体积大）
-              if (id.includes('/antd/') || id.includes('/@ant-design/icons/')) {
-                return 'antd-vendor';
-              }
-              // Pro Components（体积很大，单独打包）
-              if (id.includes('/@ant-design/pro-')) {
-                return 'pro-components-vendor';
-              }
-              // Redux 相关
-              if (
-                id.includes('/@reduxjs/') ||
-                id.includes('/react-redux/') ||
-                id.includes('/redux/')
-              ) {
-                return 'redux-vendor';
-              }
-              // 其他第三方库
-              return 'vendor';
-            }
-          },
           // 静态资源分类输出 - 优化缓存策略
           chunkFileNames: isProd
             ? 'assets/js/[name]-[hash:8].js'
@@ -170,10 +152,10 @@ export default defineConfig({
   // ========== 打包基础配置 ==========
   /** 构建输出目录，默认 dist */
   outputPath: 'dist',
-  /** 路由 base，部署在非根路径时配置，如 /app/ */
+  /** 路由 base - 预览/部署在根路径时用 '/' */
   base: '/',
-  /** 静态资源路径前缀 - 开发环境用 '/'，生产环境用 './' 支持 file:// 协议 */
-  publicPath: isProd ? './' : '/',
+  /** 静态资源路径前缀 - 用 '/' 确保预览时 /assets/... 可正确加载 */
+  publicPath: '/',
   /** 使用 hash 路由，支持 file:// 协议直接打开 */
   history: { type: 'hash' },
   /** 文件名带 hash，利于长期缓存，生产建议开启 */
