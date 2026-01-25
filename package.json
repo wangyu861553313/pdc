@@ -2,8 +2,8 @@
   "private": true,
   "author": "",
   "scripts": {
-    "build": "max build",
-    "dev": "max dev",
+    "build": "max build --bundler vite",
+    "dev": "max dev --bundler vite",
     "format": "prettier --cache --write .",
     "postinstall": "max setup",
     "prepare": "husky",
