@@ -1,5 +1,6 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import React from 'react';
+import { tableApi } from './api/tableApi';
 
 // 子表格数据类型
 export interface SubTableDataType {
@@ -34,88 +35,41 @@ interface TableState {
   selectedRowKeys: React.Key[];
   expandedRowKeys: React.Key[];
   validationErrors: Record<string, Record<string, Record<string, string>>>;
+  loading: boolean;
+  error: string | null;
 }
 
+// 使用 tableApi 获取表格数据
+export const fetchTableData = createAsyncThunk(
+  'table/fetchTableData',
+  async (_, { dispatch, rejectWithValue }) => {
+    try {
+      // 使用 tableApi 的 initiate 方法调用 API
+      const result = await dispatch(
+        tableApi.endpoints.getTableData.initiate(),
+      ).unwrap();
+
+      // 返回数据，格式：{ success: true, data: MainTableDataType[] }
+      if (result.success && result.data) {
+        return result.data as MainTableDataType[];
+      }
+      throw new Error('数据格式错误');
+    } catch (error) {
+      // 如果 API 调用失败，返回错误信息
+      return rejectWithValue(
+        error instanceof Error ? error.message : '获取数据失败',
+      );
+    }
+  },
+);
+
 const initialState: TableState = {
-  dataSource: [
-    {
-      key: '1',
-      benefitCode: 'A47',
-      benefitDescription: 'Dental treatment',
-      deductible: false,
-      coInsurance: false,
-      copayOption: false,
-      ghEmWaiveDed: false,
-      ghEmWaiveCoIns: false,
-      illnessWaiveCoIns: false,
-      disabilityLimit: false,
-      annualLimit: false,
-      lifetimeLimit: false,
-      benefitAllowAutoflow: 'Within days limit',
-      subTableData: [
-        {
-          key: '1-1',
-          category: 'Per accident limit',
-          amountType: 'Fixed value',
-          amount: '3000',
-          daysTimes: 'Input amount',
-          subjectToIllness: 'False',
-        },
-        {
-          key: '1-2',
-          category: 'Per accident limit',
-          amountType: 'Fixed value',
-          amount: '3000',
-          daysTimes: 'Input amount',
-          subjectToIllness: 'False',
-        },
-        {
-          key: '1-3',
-          category: 'Per accident limit',
-          amountType: 'Fixed value',
-          amount: '3000',
-          daysTimes: 'Input amount',
-          subjectToIllness: 'False',
-        },
-        {
-          key: '1-4',
-          category: 'Per accident limit',
-          amountType: 'Fixed value',
-          amount: '3000',
-          daysTimes: 'Input amount',
-          subjectToIllness: 'False',
-        },
-      ],
-    },
-    {
-      key: '2',
-      benefitCode: 'A47',
-      benefitDescription: 'Dental treatment',
-      deductible: false,
-      coInsurance: false,
-      copayOption: false,
-      ghEmWaiveDed: false,
-      ghEmWaiveCoIns: false,
-      illnessWaiveCoIns: false,
-      disabilityLimit: false,
-      annualLimit: false,
-      lifetimeLimit: false,
-      benefitAllowAutoflow: 'Within days limit',
-      subTableData: [
-        {
-          key: '2-1',
-          category: 'Per accident limit',
-          amountType: 'Fixed value',
-          amount: '3000',
-          daysTimes: 'Input amount',
-          subjectToIllness: 'False',
-        },
-      ],
-    },
-  ],
+  dataSource: [],
   selectedRowKeys: [],
-  expandedRowKeys: ['1', '2'],
+  expandedRowKeys: [],
   validationErrors: {},
+  loading: false,
+  error: null,
 };
 
 const tableSlice = createSlice({
@@ -214,6 +168,7 @@ const tableSlice = createSlice({
       );
       if (mainIndex !== -1) {
         const newSubKey = `${action.payload.mainKey}-${Date.now()}`;
+        // 使用 Immer 的 push 方法，确保状态正确更新
         state.dataSource[mainIndex].subTableData.push({
           key: newSubKey,
           category: 'Per accident limit',
@@ -293,6 +248,27 @@ const tableSlice = createSlice({
         }
       }
     },
+  },
+  extraReducers: (builder) => {
+    // 处理 fetchTableData
+    builder
+      .addCase(fetchTableData.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTableData.fulfilled, (state, action) => {
+        state.loading = false;
+        state.dataSource = action.payload;
+        // 默认展开所有行
+        state.expandedRowKeys = action.payload.map(
+          (item: MainTableDataType) => item.key,
+        );
+        state.error = null;
+      })
+      .addCase(fetchTableData.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as string) || '获取数据失败';
+      });
   },
 });
 

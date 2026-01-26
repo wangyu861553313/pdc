@@ -1,17 +1,22 @@
+import {
+  useDeleteMainRowMutation,
+  useSaveTableDataMutation,
+  type MainTableDataType,
+  type SubTableDataType,
+} from '@/store/api/tableApi';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   addSubRow,
   clearFieldError,
   deleteMainRow,
   deleteSubRow,
+  fetchTableData,
   setExpandedRowKeys,
   setSelectedRowKeys,
   setValidationErrors,
   updateMainCheckbox,
   updateMainSelect,
   updateSubTableData,
-  type MainTableDataType,
-  type SubTableDataType,
 } from '@/store/tableSlice';
 import {
   DeleteOutlined,
@@ -28,6 +33,7 @@ import {
   message,
   Select,
   Space,
+  Spin,
   Table,
 } from 'antd';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -103,8 +109,37 @@ EditableInput.displayName = 'EditableInput';
 
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { dataSource, selectedRowKeys, expandedRowKeys, validationErrors } =
-    useAppSelector((state) => state.table);
+  const {
+    dataSource,
+    selectedRowKeys,
+    expandedRowKeys,
+    validationErrors,
+    loading,
+    error,
+  } = useAppSelector((state) => state.table);
+
+  // 保存数据 mutation
+  const [saveTableData, { isLoading: isSaving }] = useSaveTableDataMutation();
+
+  // 删除主行 mutation
+  const [deleteMainRowApi, { isLoading: isDeleting }] =
+    useDeleteMainRowMutation();
+
+  // 组件挂载时获取数据
+  useEffect(() => {
+    if (dataSource.length === 0 && !loading) {
+      dispatch(fetchTableData());
+    }
+  }, [dispatch, dataSource.length, loading]);
+
+  // 显示错误信息
+  useEffect(() => {
+    if (error) {
+      message.error(error);
+    }
+  }, [error]);
+
+  const isLoading = loading || isSaving || isDeleting;
 
   // 全选/取消全选
   const handleSelectAll = useCallback(
@@ -214,22 +249,37 @@ const App: React.FC = () => {
     [dispatch],
   );
 
-  // 删除主表格行
+  // 删除主表格行（使用 API）
   const handleDeleteMainRow = useCallback(
-    (key: React.Key) => {
-      dispatch(deleteMainRow(key));
+    async (key: React.Key) => {
+      try {
+        await deleteMainRowApi(key).unwrap();
+        // 从本地 Redux store 中删除
+        dispatch(deleteMainRow(key));
+        message.success('删除成功');
+        // 刷新数据
+        dispatch(fetchTableData());
+      } catch (err) {
+        message.error('删除失败，请重试');
+      }
     },
-    [dispatch],
+    [dispatch, deleteMainRowApi],
   );
 
-  // 保存数据
-  const handleSave = () => {
+  // 保存数据（使用 API）
+  const handleSave = async () => {
     if (!validateRequiredFields()) {
       message.error('请填写所有必填字段');
       return;
     }
-    console.log('保存数据:', dataSource);
-    message.success('保存成功');
+    try {
+      await saveTableData({ data: dataSource }).unwrap();
+      message.success('保存成功');
+      // 刷新数据
+      dispatch(fetchTableData());
+    } catch (err) {
+      message.error('保存失败，请重试');
+    }
   };
 
   // 子表格列定义
@@ -787,6 +837,24 @@ const App: React.FC = () => {
     [subTableColumns, handleAddSubRow],
   );
 
+  // 如果正在加载，显示加载状态
+  if (isLoading && dataSource.length === 0) {
+    return (
+      <div
+        style={{
+          padding: '16px',
+          backgroundColor: '#f5f5f5',
+          minHeight: '100vh',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Spin size="large" tip="加载中..." />
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -835,49 +903,51 @@ const App: React.FC = () => {
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
         }}
       >
-        <Table<MainTableDataType>
-          columns={mainTableColumns}
-          dataSource={dataSource}
-          expandable={{
-            expandedRowRender,
-            expandedRowKeys,
-            onExpandedRowsChange: handleExpandedRowsChange,
-          }}
-          pagination={false}
-          scroll={{ x: 2000 }}
-          size="small"
-          rowKey="key"
-          style={{ fontSize: '13px' }}
-          components={{
-            header: {
-              cell: (props: any) => (
-                <th
-                  {...props}
-                  style={{
-                    ...props.style,
-                    borderBottom: '1px solid #f0f0f0',
-                    borderRight: 'none',
-                    borderLeft: 'none',
-                    borderTop: 'none',
-                  }}
-                />
-              ),
-            },
-            body: {
-              cell: (props: any) => (
-                <td
-                  {...props}
-                  style={{
-                    ...props.style,
-                    border: 'none',
-                  }}
-                />
-              ),
-            },
-          }}
-        />
+        <Spin spinning={isLoading} tip="处理中...">
+          <Table<MainTableDataType>
+            columns={mainTableColumns}
+            dataSource={dataSource}
+            expandable={{
+              expandedRowRender,
+              expandedRowKeys,
+              onExpandedRowsChange: handleExpandedRowsChange,
+            }}
+            pagination={false}
+            scroll={{ x: 2000 }}
+            size="small"
+            rowKey="key"
+            style={{ fontSize: '13px' }}
+            components={{
+              header: {
+                cell: (props: any) => (
+                  <th
+                    {...props}
+                    style={{
+                      ...props.style,
+                      borderBottom: '1px solid #f0f0f0',
+                      borderRight: 'none',
+                      borderLeft: 'none',
+                      borderTop: 'none',
+                    }}
+                  />
+                ),
+              },
+              body: {
+                cell: (props: any) => (
+                  <td
+                    {...props}
+                    style={{
+                      ...props.style,
+                      border: 'none',
+                    }}
+                  />
+                ),
+              },
+            }}
+          />
+        </Spin>
         <div style={{ marginTop: 16, textAlign: 'right' }}>
-          <Button type="primary" onClick={handleSave}>
+          <Button type="primary" onClick={handleSave} loading={isLoading}>
             Save
           </Button>
         </div>

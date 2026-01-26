@@ -39,7 +39,7 @@ export default defineConfig({
       access: 'isLogin', // 需要登录权限
     },
     {
-      name: ' CRUD 示例',
+      name: 'table',
       path: '/table',
       component: './Table',
       access: 'isLogin', // 需要登录权限
