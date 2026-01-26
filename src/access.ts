@@ -4,10 +4,15 @@ export default (
   // 在这里按照初始化数据定义项目中的权限，统一管理
   // 参考文档 https://umijs.org/docs/max/access
 
-  // 判断是否已登录：有 username 或 token 存在
+  // 优先检查 localStorage 中的 token，确保权限检查的可靠性
+  // 这样可以避免 initialState 更新延迟导致的权限检查问题
+  const token = localStorage.getItem('token');
+  const hasToken = !!token;
+
+  // 判断是否已登录：优先检查 token，其次检查 initialState
   const isLogin = !!(
-    initialState &&
-    (initialState.username === 'admin' || localStorage.getItem('token'))
+    hasToken ||
+    (initialState && initialState.username === 'admin')
   );
 
   // 管理员权限

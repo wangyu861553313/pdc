@@ -33,8 +33,9 @@ const Login: React.FC = () => {
       }));
 
       message.success('登录成功');
-      // 跳转到首页
-      navigate('/home');
+      setTimeout(() => {
+        navigate('/home', { replace: true });
+      }, 0);
       return;
     }
 
@@ -60,8 +61,9 @@ const Login: React.FC = () => {
         }
 
         message.success('登录成功');
-        // 跳转到首页
-        navigate('/home');
+        setTimeout(() => {
+          navigate('/home', { replace: true });
+        }, 0);
       } else {
         message.error(response.errorMessage || '登录失败');
       }
