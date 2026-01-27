@@ -43,30 +43,75 @@ export default defineConfig({
       component: './Login',
       layout: false,
       // 登录页面不需要权限，但已登录用户访问时重定向到首页
+      // 只对这个页面生效
+      // headerRender: false,      // 隐藏顶部
+      // menuRender: false,        // 隐藏侧边菜单
+      // footerRender: false,      // 隐藏底部
+      // menuHeaderRender: false,  // 隐藏 logo + 标题
     },
+    /**
+     * 多层嵌套路由示例：
+     * 第一层：/system（只做分组，不渲染页面）
+     * 第二层：/system/config（只做分组，不渲染页面）
+     * 第三层：具体业务页面
+     */
     {
-      name: '首页',
+      path: '/system',
+      name: '系统管理',
+      access: 'isLogin', // 统一在第一层做登录校验
+      routes: [
+        {
+          path: '/system/config',
+          name: '配置管理',
+          routes: [
+            {
+              name: '首页',
+              path: '/system/config/home',
+              component: './Home',
+            },
+            {
+              name: '权限演示',
+              path: '/system/config/access',
+              component: './Access',
+            },
+            {
+              name: 'table',
+              path: '/system/config/table',
+              component: './Table',
+            },
+            {
+              name: 'Example',
+              path: '/system/config/example',
+              component: './Example',
+            },
+          ],
+        },
+      ],
+    },
+
+    /**
+     * 兼容旧地址：保持原有 /home、/access、/table、/Example 可访问
+     * 仅做重定向到新的多级路径
+     */
+    {
       path: '/home',
-      component: './Home',
-      access: 'isLogin', // 需要登录权限
+      redirect: '/system/config/home',
+      access: 'isLogin',
     },
     {
-      name: '权限演示',
       path: '/access',
-      component: './Access',
-      access: 'isLogin', // 需要登录权限
+      redirect: '/system/config/access',
+      access: 'isLogin',
     },
     {
-      name: 'table',
       path: '/table',
-      component: './Table',
-      access: 'isLogin', // 需要登录权限
+      redirect: '/system/config/table',
+      access: 'isLogin',
     },
     {
-      name: 'Example',
       path: '/Example',
-      component: './Example',
-      access: 'isLogin', // 需要登录权限
+      redirect: '/system/config/example',
+      access: 'isLogin',
     },
   ],
 

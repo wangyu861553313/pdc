@@ -859,7 +859,7 @@ const App: React.FC = () => {
     <div
       style={{
         padding: '16px',
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#fff',
         minHeight: '100vh',
       }}
     >

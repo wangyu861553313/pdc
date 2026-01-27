@@ -31,6 +31,37 @@ export const layout = () => {
     menu: {
       locale: false,
     },
+    // 布局类型：'side' 侧边；'top' 顶部菜单；'mix' 混合
+    layout: 'side',
+
+    // 内容区域是否固定宽度
+    contentWidth: 'Fluid', // 或 'Fixed'
+
+    // 是否固定头部
+    fixedHeader: true,
+
+    // 是否固定侧边菜单
+    fixSiderbar: true,
+
+    // 主题色：'light' | 'dark' | 'realDark'
+    navTheme: 'light',
+
+    // 顶部 header 是否居中 logo + 菜单
+    headerTheme: 'dark',
+    contentStyle: {
+      padding: 16,
+      backgroundColor: '#fff',
+    },
+    token: {
+      // 顶部高度
+      headerHeight: 36,
+      // 内容区背景
+      bgLayout: '#fff',
+      // 侧边菜单宽度
+      siderWidth: 120,
+      // pageContainer 背景
+      colorBgPageContainer: '#fff',
+    },
     actionsRender: () => <LogoutButton />,
   };
 };
