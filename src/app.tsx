@@ -1,5 +1,6 @@
 // 运行时配置
 import LogoutButton from '@/components/LogoutButton';
+import { setupRem } from '@/utils/flexible';
 import { history } from '@umijs/max';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -33,6 +34,12 @@ export const layout = () => {
     actionsRender: () => <LogoutButton />,
   };
 };
+
+export function render(oldRender: () => void) {
+  // 👇 改这里即可切换设计稿
+  setupRem(1800, 16);
+  oldRender();
+}
 
 // 路由变化时的权限检查
 export function onRouteChange({

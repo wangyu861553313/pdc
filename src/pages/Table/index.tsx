@@ -952,7 +952,6 @@ const App: React.FC = () => {
           </Button>
         </div>
       </div>
-      <div className="text-red-500 bg-blue-500 h-10">123</div>
     </div>
   );
 };

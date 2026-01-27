@@ -10,6 +10,24 @@ export default defineConfig({
   },
   model: {},
   initialState: {},
+  /**
+   * PC 端 px -> rem
+   * 只处理业务样式，不污染第三方库（antd）
+   * 该配置在 Umi Max 中会自动接入 PostCSS 流程（无论是否使用 Vite）
+   */
+  extraPostCSSPlugins: [
+    require('postcss-pxtorem')({
+      // 和 setupRem(2000, 16) 对齐：设计稿宽 2000 时 html = 16px
+      // 这里写 16，表示 1rem = 16px
+      rootValue: 16,
+      propList: ['*'],
+      minPixelValue: 2,
+      mediaQuery: false,
+      // 忽略第三方库，避免污染 antd 等
+      exclude: /node_modules/i,
+    }),
+  ],
+
   request: {},
   layout: {
     title: '@umijs/max',
