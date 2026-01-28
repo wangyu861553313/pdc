@@ -52,6 +52,7 @@ export const tableApi = apiSlice.injectEndpoints({
       query: () => ({
         url: '/v1/table',
         method: 'GET',
+        keepUnusedDataFor: 0,
       }),
       providesTags: ['Table'],
     }),

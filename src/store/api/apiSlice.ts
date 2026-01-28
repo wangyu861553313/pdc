@@ -5,7 +5,7 @@ import { baseQueryWithReauth } from './baseQuery';
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['User', 'Table'], // 定义标签类型，用于缓存失效
+  tagTypes: ['User', 'Table', 'Benefit'], // 定义标签类型，用于缓存失效
   endpoints: () => ({}), // 端点将在其他文件中定义
 });
 

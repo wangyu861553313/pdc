@@ -84,6 +84,11 @@ export default defineConfig({
               path: '/system/config/example',
               component: './Example',
             },
+            {
+              name: 'Benefit Maintenance',
+              path: '/system/config/benefit-maintenance',
+              component: './BenefitMaintenance',
+            },
           ],
         },
       ],

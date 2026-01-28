@@ -1,10 +1,11 @@
 import { configureStore, Middleware } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { apiSlice } from './api/apiSlice';
+import benefitReducer from './benefitSlice';
 import tableReducer from './tableSlice';
 
 // 开发环境日志中间件（可选，用于在控制台查看 actions）
-const loggerMiddleware: Middleware = (store) => (next) => (action) => {
+const loggerMiddleware: Middleware = (store) => (next) => (action: any) => {
   if (process.env.NODE_ENV === 'development') {
     const prevState = store.getState();
     console.group(`🔵 Action: ${action.type}`);
@@ -31,6 +32,7 @@ const loggerMiddleware: Middleware = (store) => (next) => (action) => {
 export const store = configureStore({
   reducer: {
     [apiSlice.reducerPath]: apiSlice.reducer,
+    benefit: benefitReducer,
     table: tableReducer,
   },
   middleware: (getDefaultMiddleware) =>
