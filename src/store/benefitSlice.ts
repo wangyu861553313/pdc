@@ -1,10 +1,25 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { benefitApi, type BenefitRecord } from './api/benefitApi';
 
-interface BenefitState {
+export interface BenefitSearchValues {
+  benefitCode?: string;
+  benefitDescription?: string;
+  benefitGroup?: string;
+}
+
+export interface BenefitPaginationState {
+  currentPage: number;
+  pageSize: number;
+}
+
+export interface BenefitState {
   dataSource: BenefitRecord[];
   loading: boolean;
   error: string | null;
+  pagination: BenefitPaginationState;
+  searchValues: BenefitSearchValues;
+  editingRecord: BenefitRecord | null;
+  isModalVisible: boolean;
 }
 
 export const fetchBenefits = createAsyncThunk(
@@ -30,12 +45,46 @@ const initialState: BenefitState = {
   dataSource: [],
   loading: false,
   error: null,
+  pagination: {
+    currentPage: 1,
+    pageSize: 10,
+  },
+  searchValues: {},
+  editingRecord: null,
+  isModalVisible: false,
 };
 
 const benefitSlice = createSlice({
   name: 'benefit',
   initialState,
   reducers: {
+    setSearchValues: (state, action: PayloadAction<BenefitSearchValues>) => {
+      state.searchValues = action.payload;
+      state.pagination.currentPage = 1;
+    },
+    resetSearch: (state) => {
+      state.searchValues = {};
+      state.pagination.currentPage = 1;
+    },
+    openCreateModal: (state) => {
+      state.editingRecord = null;
+      state.isModalVisible = true;
+    },
+    openEditModal: (state, action: PayloadAction<BenefitRecord>) => {
+      state.editingRecord = action.payload;
+      state.isModalVisible = true;
+    },
+    closeModal: (state) => {
+      state.editingRecord = null;
+      state.isModalVisible = false;
+    },
+    setPaginationPage: (state, action: PayloadAction<number>) => {
+      state.pagination.currentPage = action.payload;
+    },
+    setPaginationPageSize: (state, action: PayloadAction<number>) => {
+      state.pagination.pageSize = action.payload;
+      state.pagination.currentPage = 1;
+    },
     upsertBenefit: (state, action: PayloadAction<BenefitRecord>) => {
       const index = state.dataSource.findIndex(
         (item) => item.key === action.payload.key,
@@ -64,6 +113,51 @@ const benefitSlice = createSlice({
   },
 });
 
-export const { upsertBenefit } = benefitSlice.actions;
+export const {
+  upsertBenefit,
+  setSearchValues,
+  resetSearch,
+  openCreateModal,
+  openEditModal,
+  closeModal,
+  setPaginationPage,
+  setPaginationPageSize,
+} = benefitSlice.actions;
+
+function filterBenefits(
+  data: BenefitRecord[],
+  search: BenefitSearchValues,
+): BenefitRecord[] {
+  return data.filter((item) => {
+    const { benefitCode, benefitDescription, benefitGroup } = search;
+    if (
+      benefitCode &&
+      !item.benefitCode.toLowerCase().includes(benefitCode.toLowerCase())
+    ) {
+      return false;
+    }
+    if (
+      benefitDescription &&
+      !item.benefitDescription
+        .toLowerCase()
+        .includes(benefitDescription.toLowerCase())
+    ) {
+      return false;
+    }
+    if (benefitGroup && item.benefitGroup !== benefitGroup) {
+      return false;
+    }
+    return true;
+  });
+}
+
+export const selectFilteredBenefits = (state: {
+  benefit: BenefitState;
+}): BenefitRecord[] =>
+  filterBenefits(state.benefit.dataSource, state.benefit.searchValues);
+
+export const selectShouldFetchBenefits = (state: {
+  benefit: BenefitState;
+}): boolean => state.benefit.dataSource.length === 0;
 
 export default benefitSlice.reducer;

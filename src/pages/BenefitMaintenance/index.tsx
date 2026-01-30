@@ -1,3 +1,22 @@
+import type { BenefitRecord } from '@/store/api/benefitApi';
+import {
+  useGetBenefitsQuery,
+  useSaveBenefitMutation,
+} from '@/store/api/benefitApi';
+import {
+  closeModal,
+  fetchBenefits,
+  openCreateModal,
+  openEditModal,
+  resetSearch,
+  selectFilteredBenefits,
+  selectShouldFetchBenefits,
+  setPaginationPage,
+  setPaginationPageSize,
+  setSearchValues,
+  upsertBenefit,
+} from '@/store/benefitSlice';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { EditOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import {
   Button,
@@ -7,26 +26,11 @@ import {
   Modal,
   Select,
   Space,
+  Spin,
   Table,
   type TableColumnsType,
 } from 'antd';
-import React, { useMemo, useState } from 'react';
-
-interface BenefitRecord {
-  key: string;
-  benefitCode: string;
-  benefitDescription: string;
-  benefitGroup: string;
-  displaySequence: number;
-  settleSequence: string;
-  nonPayable: boolean;
-}
-
-interface SearchFormValues {
-  benefitCode?: string;
-  benefitDescription?: string;
-  benefitGroup?: string;
-}
+import React, { useEffect } from 'react';
 
 interface EditFormValues {
   benefitCode: string;
@@ -48,80 +52,47 @@ const claimTypeOptions = [
   { label: 'OP - Outpatient', value: 'OP - Outpatient' },
 ];
 
-const initialData: BenefitRecord[] = [
-  {
-    key: '1',
-    benefitCode: 'H001',
-    benefitDescription: 'Room & Board',
-    benefitGroup: 'MC01 - Room & Board',
-    displaySequence: 1,
-    settleSequence: 'B1112',
-    nonPayable: false,
-  },
-  {
-    key: '2',
-    benefitCode: 'H002',
-    benefitDescription: 'Intensive Care Unit',
-    benefitGroup: 'MC01 - Room & Board',
-    displaySequence: 2,
-    settleSequence: 'B1113',
-    nonPayable: false,
-  },
-];
+interface SearchFormValues {
+  benefitCode?: string;
+  benefitDescription?: string;
+  benefitGroup?: string;
+}
 
 const BenefitMaintenancePage: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const { pagination, editingRecord, isModalVisible } = useAppSelector(
+    (state) => state.benefit,
+  );
+  const filteredData = useAppSelector(selectFilteredBenefits);
+  const shouldFetch = useAppSelector(selectShouldFetchBenefits);
+
   const [form] = Form.useForm<SearchFormValues>();
   const [editForm] = Form.useForm<EditFormValues>();
-  const [dataSource, setDataSource] = useState<BenefitRecord[]>(initialData);
-  const [editingRecord, setEditingRecord] = useState<BenefitRecord | null>(
-    null,
-  );
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const { isLoading: isQueryLoading } = useGetBenefitsQuery();
+  const [saveBenefit, { isLoading: isSaving }] = useSaveBenefitMutation();
 
-  const [searchValues, setSearchValues] = useState<SearchFormValues>({});
-
-  const filteredData = useMemo(() => {
-    return dataSource.filter((item) => {
-      const { benefitCode, benefitDescription, benefitGroup } = searchValues;
-      if (
-        benefitCode &&
-        !item.benefitCode.toLowerCase().includes(benefitCode.toLowerCase())
-      ) {
-        return false;
-      }
-      if (
-        benefitDescription &&
-        !item.benefitDescription
-          .toLowerCase()
-          .includes(benefitDescription.toLowerCase())
-      ) {
-        return false;
-      }
-      if (benefitGroup && item.benefitGroup !== benefitGroup) {
-        return false;
-      }
-      return true;
-    });
-  }, [dataSource, searchValues]);
+  useEffect(() => {
+    if (shouldFetch) {
+      dispatch(fetchBenefits());
+    }
+  }, [shouldFetch, dispatch]);
 
   const handleSearch = () => {
-    const values = form.getFieldsValue();
-    setSearchValues(values);
+    const values = form.getFieldsValue() as SearchFormValues;
+    dispatch(setSearchValues(values));
   };
 
   const handleReset = () => {
     form.resetFields();
-    setSearchValues({});
+    dispatch(resetSearch());
   };
 
-  const openCreateModal = () => {
-    setEditingRecord(null);
+  const handleOpenCreateModal = () => {
     editForm.resetFields();
-    setIsModalVisible(true);
+    dispatch(openCreateModal());
   };
 
-  const openEditModal = (record: BenefitRecord) => {
-    setEditingRecord(record);
+  const handleOpenEditModal = (record: BenefitRecord) => {
     editForm.setFieldsValue({
       benefitCode: record.benefitCode,
       benefitDescription: record.benefitDescription,
@@ -129,48 +100,33 @@ const BenefitMaintenancePage: React.FC = () => {
       displaySequence: record.displaySequence,
       nonPayable: record.nonPayable,
     });
-    setIsModalVisible(true);
+    dispatch(openEditModal(record));
   };
 
   const handleModalOk = async () => {
     try {
       const values = await editForm.validateFields();
-      if (editingRecord) {
-        setDataSource((prev) =>
-          prev.map((item) =>
-            item.key === editingRecord.key
-              ? {
-                  ...item,
-                  benefitCode: values.benefitCode,
-                  benefitDescription: values.benefitDescription || '',
-                  benefitGroup: values.benefitGroup || '',
-                  displaySequence: values.displaySequence || 0,
-                  nonPayable: !!values.nonPayable,
-                }
-              : item,
-          ),
-        );
-      } else {
-        const newKey = String(Date.now());
-        const newRecord: BenefitRecord = {
-          key: newKey,
-          benefitCode: values.benefitCode,
-          benefitDescription: values.benefitDescription || '',
-          benefitGroup: values.benefitGroup || '',
-          displaySequence: values.displaySequence || 0,
-          settleSequence: '',
-          nonPayable: !!values.nonPayable,
-        };
-        setDataSource((prev) => [...prev, newRecord]);
-      }
-      setIsModalVisible(false);
+      const key = editingRecord?.key ?? String(Date.now());
+      const nextRecord: BenefitRecord = {
+        key,
+        benefitCode: values.benefitCode,
+        benefitDescription: values.benefitDescription || '',
+        benefitGroup: values.benefitGroup || '',
+        displaySequence: values.displaySequence || 0,
+        settleSequence: editingRecord?.settleSequence || '',
+        nonPayable: !!values.nonPayable,
+      };
+
+      await saveBenefit({ record: nextRecord }).unwrap();
+      dispatch(upsertBenefit(nextRecord));
+      dispatch(closeModal());
     } catch {
       // validate failed
     }
   };
 
   const handleModalCancel = () => {
-    setIsModalVisible(false);
+    dispatch(closeModal());
   };
 
   const columns: TableColumnsType<BenefitRecord> = [
@@ -216,11 +172,13 @@ const BenefitMaintenancePage: React.FC = () => {
         <Button
           type="text"
           icon={<EditOutlined />}
-          onClick={() => openEditModal(record)}
+          onClick={() => handleOpenEditModal(record)}
         />
       ),
     },
   ];
+
+  const isLoading = isQueryLoading || isSaving;
 
   return (
     <div
@@ -293,7 +251,7 @@ const BenefitMaintenancePage: React.FC = () => {
                 <Button
                   type="primary"
                   icon={<PlusOutlined />}
-                  onClick={openCreateModal}
+                  onClick={handleOpenCreateModal}
                 >
                   Create
                 </Button>
@@ -301,21 +259,34 @@ const BenefitMaintenancePage: React.FC = () => {
             </Form.Item>
           </Form>
 
-          <Table<BenefitRecord>
-            columns={columns}
-            dataSource={filteredData}
-            rowKey="key"
-            pagination={{
-              pageSize: 10,
-              showSizeChanger: false,
-            }}
-          />
+          <Spin spinning={isLoading}>
+            <Table<BenefitRecord>
+              columns={columns}
+              dataSource={filteredData}
+              rowKey="key"
+              pagination={{
+                current: pagination.currentPage,
+                pageSize: pagination.pageSize,
+                total: filteredData.length,
+                showSizeChanger: true,
+                pageSizeOptions: ['10', '20', '50', '100'],
+                showTotal: (total) => `共 ${total} 条`,
+                onChange: (page, pageSize) => {
+                  dispatch(setPaginationPage(page));
+                  if (pageSize !== pagination.pageSize) {
+                    dispatch(setPaginationPageSize(pageSize));
+                  }
+                },
+              }}
+            />
+          </Spin>
         </div>
       </div>
 
       <Modal
         open={isModalVisible}
         title={editingRecord ? 'Edit Benefit' : 'Create Benefit'}
+        afterClose={() => editForm.resetFields()}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
         width={900}
