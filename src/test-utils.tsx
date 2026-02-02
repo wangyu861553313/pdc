@@ -4,6 +4,7 @@ import { ConfigProvider } from 'antd';
 import React, { ReactElement } from 'react';
 import { Provider } from 'react-redux';
 import { apiSlice } from './store/api/apiSlice';
+import benefitReducer from './store/benefitSlice';
 import tableReducer from './store/tableSlice';
 
 export function createTestStore() {
@@ -11,6 +12,7 @@ export function createTestStore() {
     reducer: {
       [apiSlice.reducerPath]: apiSlice.reducer,
       table: tableReducer,
+      benefit: benefitReducer,
     },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware().concat(apiSlice.middleware),

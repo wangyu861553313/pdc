@@ -1,9 +1,13 @@
 // 运行时配置
 import LogoutButton from '@/components/LogoutButton';
+import { LAYOUT_CONTENT_PADDING } from '@/constants';
+import { antdTheme } from '@/theme/antd';
 import { setupRem } from '@/utils/flexible';
 import { history } from '@umijs/max';
+import { ConfigProvider } from 'antd';
 import React from 'react';
 import { Provider } from 'react-redux';
+import './global.less';
 import { store } from './store';
 
 // 全局初始化数据配置，用于 Layout 用户信息和权限初始化
@@ -49,7 +53,7 @@ export const layout = () => {
     // 顶部 header 是否居中 logo + 菜单
     headerTheme: 'dark',
     contentStyle: {
-      padding: 16,
+      padding: LAYOUT_CONTENT_PADDING,
       backgroundColor: '#fff',
     },
     token: {
@@ -92,7 +96,11 @@ export function onRouteChange({
   }
 }
 
-// 配置 Redux Provider
+// 配置 Redux Provider 与 antd 全局默认样式
 export function rootContainer(container: React.ReactElement) {
-  return <Provider store={store}>{container}</Provider>;
+  return (
+    <ConfigProvider theme={antdTheme}>
+      <Provider store={store}>{container}</Provider>
+    </ConfigProvider>
+  );
 }

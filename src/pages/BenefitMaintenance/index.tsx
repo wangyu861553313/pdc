@@ -1,3 +1,4 @@
+import PageContentCard from '@/components/PageContentCard';
 import type { BenefitRecord } from '@/store/api/benefitApi';
 import {
   useGetBenefitsQuery,
@@ -181,107 +182,78 @@ const BenefitMaintenancePage: React.FC = () => {
   const isLoading = isQueryLoading || isSaving;
 
   return (
-    <div
-      style={{
-        backgroundColor: '#f5f5f5',
-        minHeight: '100vh',
-        padding: 16,
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 1400,
-          margin: '0 auto',
-          backgroundColor: '#fff',
-          borderRadius: 4,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            backgroundColor: '#cf1322',
-            color: '#fff',
-            padding: '12px 24px',
-            fontSize: 18,
-            fontWeight: 600,
-          }}
+    <>
+      <PageContentCard title="Benefit Maintenance">
+        <Form
+          form={form}
+          layout="inline"
+          style={{ marginBottom: 16, rowGap: 12 }}
         >
-          Benefit Maintenance
-        </div>
-
-        <div style={{ padding: 24 }}>
-          <Form
-            form={form}
-            layout="inline"
-            style={{ marginBottom: 16, rowGap: 12 }}
-          >
-            <Form.Item label="Benefit Code" name="benefitCode">
-              <Input
-                placeholder="Placeholder"
-                allowClear
-                style={{ width: 220 }}
-              />
-            </Form.Item>
-            <Form.Item label="Benefit Description" name="benefitDescription">
-              <Input
-                placeholder="Placeholder"
-                allowClear
-                style={{ width: 260 }}
-              />
-            </Form.Item>
-            <Form.Item label="Benefit Group" name="benefitGroup">
-              <Select
-                options={benefitGroupOptions}
-                placeholder="Select benefit group"
-                allowClear
-                style={{ width: 260 }}
-              />
-            </Form.Item>
-            <Form.Item>
-              <Space>
-                <Button
-                  type="primary"
-                  icon={<SearchOutlined />}
-                  onClick={handleSearch}
-                >
-                  Search
-                </Button>
-                <Button onClick={handleReset}>Reset</Button>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={handleOpenCreateModal}
-                >
-                  Create
-                </Button>
-              </Space>
-            </Form.Item>
-          </Form>
-
-          <Spin spinning={isLoading}>
-            <Table<BenefitRecord>
-              columns={columns}
-              dataSource={filteredData}
-              rowKey="key"
-              pagination={{
-                current: pagination.currentPage,
-                pageSize: pagination.pageSize,
-                total: filteredData.length,
-                showSizeChanger: true,
-                pageSizeOptions: ['10', '20', '50', '100'],
-                showTotal: (total) => `共 ${total} 条`,
-                onChange: (page, pageSize) => {
-                  dispatch(setPaginationPage(page));
-                  if (pageSize !== pagination.pageSize) {
-                    dispatch(setPaginationPageSize(pageSize));
-                  }
-                },
-              }}
+          <Form.Item label="Benefit Code" name="benefitCode">
+            <Input
+              placeholder="Placeholder"
+              allowClear
+              // style={{ width: 220 }}
             />
-          </Spin>
-        </div>
-      </div>
+          </Form.Item>
+          <Form.Item label="Benefit Description" name="benefitDescription">
+            <Input
+              placeholder="Placeholder"
+              allowClear
+              // style={{ width: 260 }}
+            />
+          </Form.Item>
+          <Form.Item label="Benefit Group" name="benefitGroup">
+            <Select
+              options={benefitGroupOptions}
+              placeholder="Select benefit group"
+              allowClear
+              // style={{ width: 260 }}
+            />
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button
+                type="primary"
+                icon={<SearchOutlined />}
+                onClick={handleSearch}
+              >
+                Search
+              </Button>
+              <Button onClick={handleReset}>Reset</Button>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={handleOpenCreateModal}
+              >
+                Create
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+
+        <Spin spinning={isLoading}>
+          <Table<BenefitRecord>
+            columns={columns}
+            dataSource={filteredData}
+            rowKey="key"
+            pagination={{
+              current: pagination.currentPage,
+              pageSize: pagination.pageSize,
+              total: filteredData.length,
+              showSizeChanger: true,
+              pageSizeOptions: ['10', '20', '50', '100'],
+              showTotal: (total) => `共 ${total} 条`,
+              onChange: (page, pageSize) => {
+                dispatch(setPaginationPage(page));
+                if (pageSize !== pagination.pageSize) {
+                  dispatch(setPaginationPageSize(pageSize));
+                }
+              },
+            }}
+          />
+        </Spin>
+      </PageContentCard>
 
       <Modal
         open={isModalVisible}
@@ -363,7 +335,7 @@ const BenefitMaintenancePage: React.FC = () => {
           </div>
         </Form>
       </Modal>
-    </div>
+    </>
   );
 };
 

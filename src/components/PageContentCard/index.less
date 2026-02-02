@@ -1,0 +1,26 @@
+// 通用页面内容卡片样式 - 与 app.tsx layout contentStyle 统一（padding 由常量 LAYOUT_CONTENT_PADDING 注入）
+.pageContentCard {
+  background-color: #f5f5f5;
+  min-height: 100%;
+
+  /* padding 由 LAYOUT_CONTENT_PADDING 在组件内注入，与 layout contentStyle 一致 */
+
+  .pageContentCardInner {
+    margin: 0 auto;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 8%);
+    overflow: hidden;
+  }
+
+  .pageContentCardHeader {
+    padding: 12px 24px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .pageContentCardBody {
+    padding: 24px;
+  }
+}

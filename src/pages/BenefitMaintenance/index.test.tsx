@@ -7,6 +7,7 @@ import benefitReducer, {
   resetSearch,
   setSearchValues,
 } from '@/store/benefitSlice';
+import tableReducer from '@/store/tableSlice';
 import { render, screen, waitFor, within } from '@/test-utils';
 import { configureStore } from '@reduxjs/toolkit';
 import userEvent from '@testing-library/user-event';
@@ -124,6 +125,7 @@ function createBenefitTestStore() {
     reducer: {
       [apiSlice.reducerPath]: apiSlice.reducer,
       benefit: benefitReducer,
+      table: tableReducer,
     },
     middleware: (getDefaultMiddleware) =>
       getDefaultMiddleware().concat(apiSlice.middleware),
