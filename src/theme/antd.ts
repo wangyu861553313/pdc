@@ -31,6 +31,15 @@ export const antdTheme: ThemeConfig = {
     // headerColor: 'rgb(207, 19, 34)',
     // tdBorderColor: 'rgb(207, 19, 34)'
     // colorTextLabel: 'rgb(207, 19, 34)'
+    /**
+     * 全局菜单文字颜色（包含侧边菜单）
+     * 如需仅在选中时为红色，可只保留 itemSelectedColor
+     */
+    Menu: {
+      itemColor: '#fff',
+      itemHoverColor: '#ffffff',
+      itemSelectedColor: 'fff',
+    },
     Table: {
       headerBg: '#fff',
       /** 表头下边框颜色（表头与内容区分割线） */

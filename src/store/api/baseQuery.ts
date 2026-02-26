@@ -7,51 +7,53 @@ import { fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { history } from '@umijs/max';
 import { message } from 'antd';
 
-// 创建基础 baseQuery，集成 umimax 的 request 配置
+// 请求基础地址：.umirc define 注入 process.env.API_BASE_URL，默认 '/api'
+function getBaseUrl(): string {
+  const v =
+    (typeof process !== 'undefined' && (process.env as any)?.API_BASE_URL) ||
+    '';
+  const s = (typeof v === 'string' ? v : '').replace(/^["']|["']$/g, '').trim();
+  return (s || '/api').replace(/\/$/, '') || '/api';
+}
+
 export const baseQuery = fetchBaseQuery({
-  baseUrl: '/api', // 根据项目实际情况调整
-  prepareHeaders: (headers) => {
-    // 添加 token 等认证信息
+  baseUrl: getBaseUrl(),
+  timeout: 30000,
+  credentials: 'same-origin',
+  prepareHeaders: (headers, { arg }) => {
     const token = localStorage.getItem('token');
-    if (token) {
-      headers.set('authorization', `Bearer ${token}`);
-    }
-    headers.set('Content-Type', 'application/json');
+    if (token) headers.set('authorization', `Bearer ${token}`);
+    const a =
+      typeof arg === 'object' && arg && 'method' in arg
+        ? (arg as { method?: string; body?: unknown })
+        : null;
+    if (
+      a?.method &&
+      ['POST', 'PUT', 'PATCH'].includes(a.method.toUpperCase()) &&
+      'body' in a
+    )
+      headers.set('Content-Type', 'application/json');
     return headers;
   },
 });
 
-// 带错误处理的 baseQuery
 export const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
   unknown,
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-  let result = await baseQuery(args, api, extraOptions);
-
-  // 处理错误
+  const result = await baseQuery(args, api, extraOptions);
   if (result.error) {
     const { status, data } = result.error;
-
+    const msg = (data as { message?: string })?.message;
     if (status === 401) {
-      // 未授权，清除 token 并跳转到登录页
       localStorage.removeItem('token');
       message.error('未授权，请重新登录');
-      // 避免在登录页重复跳转
-      if (window.location.pathname !== '/login') {
-        history.push('/login');
-      }
-    } else if (status === 403) {
-      message.error('没有权限访问');
-    } else if (status === 404) {
-      message.error('请求的资源不存在');
-    } else if (status === 500) {
-      message.error('服务器错误');
-    } else {
-      const errorData = data as { message?: string };
-      message.error(errorData?.message || '请求失败');
-    }
+      if (window.location.pathname !== '/login') history.push('/login');
+    } else if (status === 403) message.error('没有权限访问');
+    else if (status === 404) message.error('请求的资源不存在');
+    else if (status === 500) message.error('服务器错误');
+    else message.error(msg || '请求失败');
   }
-
   return result;
 };

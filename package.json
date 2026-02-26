@@ -6,6 +6,7 @@
     "build:analyze": "cross-env ANALYZE=1 max build",
     "build:prod": "cross-env NODE_ENV=production max build",
     "dev": "max dev",
+    "dev:backend": "cd backend && npm run start",
     "format": "prettier --cache --write .",
     "postinstall": "max setup",
     "prepare": "husky",

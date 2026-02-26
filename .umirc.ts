@@ -2,6 +2,12 @@ import { defineConfig } from '@umijs/max';
 
 const isProd = process.env.NODE_ENV === 'production';
 
+// 请求配置（集中在此，.env 可覆盖）
+const API_PROXY_TARGET =
+  process.env.API_PROXY_TARGET || 'http://localhost:3000'; // 开发代理目标，不设则走 mock
+const API_BASE_URL =
+  process.env.UMI_APP_API_BASE_URL || process.env.API_BASE_URL || '/api'; // 前端请求 baseUrl
+
 export default defineConfig({
   antd: {},
   access: {
@@ -124,11 +130,19 @@ export default defineConfig({
 
   // ========== 启用 Vite 模式 ==========
   vite: {
-    // 开发服务器配置
     server: {
       host: '0.0.0.0',
       port: 8000,
       open: true,
+      proxy: isProd
+        ? undefined
+        : {
+            '/api': {
+              target: API_PROXY_TARGET,
+              changeOrigin: true,
+              rewrite: (path: string) => path.replace(/^\/api/, ''),
+            },
+          },
     },
 
     // 构建优化配置
@@ -230,10 +244,19 @@ export default defineConfig({
   hash: true,
   /** 解决 esbuild helpers 冲突，避免构建报错 */
   esbuildMinifyIIFE: true,
-  /** 注入构建时环境变量，供代码中 process.env.XXX 使用 */
   define: {
     'process.env.BUILD_TIME': JSON.stringify(new Date().toISOString()),
+    'process.env.API_BASE_URL': JSON.stringify(API_BASE_URL),
   },
+  proxy: isProd
+    ? undefined
+    : {
+        '/api': {
+          target: API_PROXY_TARGET,
+          changeOrigin: true,
+          pathRewrite: { '^/api': '' },
+        },
+      },
   /** 开发环境 source map 配置 - 错误信息映射到具体代码行 */
   devtool: isProd ? false : 'eval-cheap-module-source-map',
 
